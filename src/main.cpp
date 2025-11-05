@@ -40,21 +40,22 @@ int main() {
     std::string builtin = args[idx++];
 
     if(builtin == "exit" && args.size() > 1) {
-      std::cout << printErr;
-      // if(args[1] == "1") {
-      //   return 1;
-      // }
-      // else if(args[1] == "0") {
-      //   return 0;
-      // } 
+      if(args[1] == "1") {
+        return 1;
+      }
+      else if(args[1] == "0") {
+        return 0;
+      } 
     }
 
-    if(builtin == "echo") {
+    else if(builtin == "echo") {
       std::vector<std::string> printEcho;
       for(; idx < args.size(); idx++) {
         std::cout << args[idx] << " ";
       }
     }
+    else 
+      std::cout << printErr;
     
     std::cout << std::endl;
   }
