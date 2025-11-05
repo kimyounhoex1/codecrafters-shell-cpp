@@ -55,7 +55,7 @@ int main() {
       }
     }
     else 
-      std::cout << printErr;
+      std::cout << input << ": " << printErr;
     
     std::cout << std::endl;
   }
