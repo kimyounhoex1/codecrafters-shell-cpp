@@ -1,4 +1,7 @@
+#include <unistd.h>
+
 #include <cstdint>
+#include <cstdlib>
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -17,7 +20,7 @@ std::vector<std::string> split(std::string& input, char delimiter = ' ') {
   return tokens;
 }
 
-enum class Command { UNKNOWN, EXIT, ECHO, TYPE };
+enum class Command { UNKNOWN, EXIT, ECHO, TYPE, GREP };
 
 Command getCommand(std::string cmd_str) {
   if (cmd_str == "exit") {
@@ -26,11 +29,35 @@ Command getCommand(std::string cmd_str) {
     return Command::ECHO;
   } else if (cmd_str == "type") {
     return Command::TYPE;
-  } else {
-    return Command::UNKNOWN;
   }
+  return Command::UNKNOWN;
 }
 
+void ProcessCommandPath(const std::string& cmd_str) {
+  const char* envPath = std::getenv("PATH");
+
+  if (envPath == nullptr) {
+    std::cout << cmd_str << ": not found";
+    return;
+  }
+
+  std::string pathvar = envPath;
+
+  auto paths = split(pathvar, ':');
+
+  for (const auto& path : paths) {
+    std::string fullPath = path + "/" + cmd_str;
+
+    // F_OK: 파일 존재 여부
+    // X_OK: 실행 가능 여부
+    if (access(fullPath.c_str(), F_OK | X_OK) == 0) {
+      std::cout << cmd_str << " is " << fullPath;
+      return;
+    }
+  }
+
+  std::cout << cmd_str << ": not found";
+}
 int main() {
   // Flush after every std::cout / std:cerr
   std::cout << std::unitbuf;
@@ -76,7 +103,7 @@ int main() {
       if (tar_cmd != Command::UNKNOWN) {
         std::cout << cmd_var << " is a shell builtin";
       } else {
-        std::cout << cmd_var << ": not found";
+        ProcessCommandPath(cmd_var);
       }
     } else {
       std::cout << input << ": " << printErr;
