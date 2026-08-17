@@ -53,10 +53,14 @@ int main() {
 
     Command cmd = getCommand(builtin);
 
-    if (cmd == Command::EXIT && args.size() > 1) {
-      if (args[1] == "1") {
-        return 1;
-      } else if (args[1] == "0") {
+    if (cmd == Command::EXIT) {
+      if (args.size() > 1) {
+        if (args[1] == "1") {
+          return 1;
+        } else if (args[1] == "0") {
+          return 0;
+        }
+      } else {
         return 0;
       }
     }
