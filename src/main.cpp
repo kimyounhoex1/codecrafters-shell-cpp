@@ -72,7 +72,7 @@ int main() {
       if (tar_cmd != Command::UNKNOWN) {
         std::cout << cmd_var << " is a shell builtin";
       } else {
-        std::cout << "invalid_command: not found";
+        std::cout << cmd_var << ": not found";
       }
     } else {
       std::cout << input << ": " << printErr;
