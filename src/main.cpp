@@ -134,6 +134,7 @@ int main() {
       if (ProcessCommandPath(args[0], fullPath)) {
         execCommand(fullPath, args);
       }
+      continue;
     } else {
       std::cout << input << ": " << printErr;
     }
