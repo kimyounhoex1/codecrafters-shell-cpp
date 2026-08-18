@@ -67,7 +67,7 @@ void execCommand(const std::string& fullPath,
   if (pid == 0) {
     std::vector<char*> argv;
 
-    for (const std::string arg : args) {
+    for (const std::string& arg : args) {
       argv.push_back(const_cast<char*>(arg.c_str()));
     }
 
@@ -79,26 +79,6 @@ void execCommand(const std::string& fullPath,
     waitpid(pid, nullptr, 0);
   }
 }
-
-// void execCommand(const std::string& fullPath,
-//                  const std::vector<std::string> args) {
-//   pid_t pid = fork();
-
-//   if (pid == 0) {
-//     std::vector<char*> argv;
-
-//     for (const std::string arg : args) {
-//       argv.push_back(const_cast<char*>(arg.c_str()));
-//     }
-
-//     argv.push_back(nullptr);
-//     execv(fullPath.c_str(), argv.data());
-
-//     _exit(1);
-//   } else {
-//     waitpid(pid, nullptr, 0);
-//   }
-// }
 
 int main() {
   // Flush after every std::cout / std:cerr
@@ -151,7 +131,7 @@ int main() {
         }
       }
     } else if (cmd == Command::EXTERNAL) {
-      if (ProcessCommandPath(fullPath, args[0])) {
+      if (ProcessCommandPath(args[0], fullPath)) {
         execCommand(fullPath, args);
       }
     } else {
