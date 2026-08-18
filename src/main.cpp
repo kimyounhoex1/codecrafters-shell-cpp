@@ -67,7 +67,7 @@ void execCommand(const std::string& fullPath,
   if (pid == 0) {
     std::vector<char*> argv;
 
-    for (const std::string& arg : args) {
+    for (const auto& arg : args) {
       argv.push_back(const_cast<char*>(arg.c_str()));
     }
 
