@@ -1,3 +1,4 @@
+#include <sys/wait.h>
 #include <unistd.h>
 
 #include <cstdint>
@@ -6,6 +7,14 @@
 #include <sstream>
 #include <string>
 #include <vector>
+
+enum class Command { UNKNOWN, EXIT, ECHO, TYPE, EXTERNAL };
+
+std::vector<std::string> split(std::string& input, char delimiter);
+Command getCommand(std::string cmd_str);
+bool ProcessCommandPath(const std::string& cmd_str, std::string& fullPath);
+void execCommand(const std::string& fullPath,
+                 const std::vector<std::string> args);
 
 std::vector<std::string> split(std::string& input, char delimiter = ' ') {
   std::vector<std::string> tokens;
@@ -20,44 +29,57 @@ std::vector<std::string> split(std::string& input, char delimiter = ' ') {
   return tokens;
 }
 
-enum class Command { UNKNOWN, EXIT, ECHO, TYPE, GREP };
-
 Command getCommand(std::string cmd_str) {
+  std::string str;
   if (cmd_str == "exit") {
     return Command::EXIT;
   } else if (cmd_str == "echo") {
     return Command::ECHO;
   } else if (cmd_str == "type") {
     return Command::TYPE;
+  } else if (ProcessCommandPath(cmd_str, str)) {
+    return Command::EXTERNAL;
   }
   return Command::UNKNOWN;
 }
 
-void ProcessCommandPath(const std::string& cmd_str) {
+bool ProcessCommandPath(const std::string& cmd_str, std::string& fullPath) {
   const char* envPath = std::getenv("PATH");
 
-  if (envPath == nullptr) {
-    std::cout << cmd_str << ": not found";
-    return;
-  }
+  if (envPath == nullptr) return false;
 
   std::string pathvar = envPath;
 
   auto paths = split(pathvar, ':');
 
   for (const auto& path : paths) {
-    std::string fullPath = path + "/" + cmd_str;
-
-    // F_OK: 파일 존재 여부
-    // X_OK: 실행 가능 여부
-    if (access(fullPath.c_str(), F_OK | X_OK) == 0) {
-      std::cout << cmd_str << " is " << fullPath;
-      return;
-    }
+    fullPath = path + "/" + cmd_str;
+    if (access(fullPath.c_str(), F_OK | X_OK) == 0) return true;
   }
 
-  std::cout << cmd_str << ": not found";
+  return false;
 }
+
+void execCommand(const std::string& fullPath,
+                 const std::vector<std::string> args) {
+  pid_t pid = fork();
+
+  if (pid == 0) {
+    std::vector<char*> argv;
+
+    for (const std::string arg : args) {
+      argv.push_back(const_cast<char*>(arg.c_str()));
+    }
+
+    argv.push_back(nullptr);
+    execv(fullPath.c_str(), argv.data());
+
+    _exit(1);
+  } else {
+    waitpid(pid, nullptr, 0);
+  }
+}
+
 int main() {
   // Flush after every std::cout / std:cerr
   std::cout << std::unitbuf;
@@ -70,6 +92,7 @@ int main() {
     std::cout << "$ ";
     std::string input;
     idx = 0;
+    std::string fullPath;
     if (!std::getline(std::cin, input)) break;
 
     if (input.empty()) continue;
@@ -90,9 +113,7 @@ int main() {
       } else {
         return 0;
       }
-    }
-
-    else if (cmd == Command::ECHO) {
+    } else if (cmd == Command::ECHO) {
       std::vector<std::string> printEcho;
       for (; idx < args.size(); idx++) {
         std::cout << args[idx] << " ";
@@ -103,7 +124,15 @@ int main() {
       if (tar_cmd != Command::UNKNOWN) {
         std::cout << cmd_var << " is a shell builtin";
       } else {
-        ProcessCommandPath(cmd_var);
+        if (ProcessCommandPath(cmd_var, fullPath)) {
+          std::cout << cmd_var << " is " << fullPath;
+        } else {
+          std::cout << cmd_var << ": not found";
+        }
+      }
+    } else if (cmd == Command::EXTERNAL) {
+      if (ProcessCommandPath(args[0], fullPath)) {
+        execCommand(fullPath, args);
       }
     } else {
       std::cout << input << ": " << printErr;
