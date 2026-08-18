@@ -121,14 +121,15 @@ int main() {
     } else if (cmd == Command::TYPE) {
       std::string cmd_var = args[idx];
       Command tar_cmd = getCommand(cmd_var);
-      if (tar_cmd != Command::UNKNOWN) {
+      if (tar_cmd == Command::EXIT || tar_cmd == Command::ECHO ||
+          tar_cmd == Command::TYPE) {
         std::cout << cmd_var << " is a shell builtin";
-      } else {
+      } else if (tar_cmd == Command::EXTERNAL) {
         if (ProcessCommandPath(cmd_var, fullPath)) {
           std::cout << cmd_var << " is " << fullPath;
-        } else {
-          std::cout << cmd_var << ": not found";
         }
+      } else {
+        std::cout << cmd_var << ": not found";
       }
     } else if (cmd == Command::EXTERNAL) {
       if (ProcessCommandPath(args[0], fullPath)) {
